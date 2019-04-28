@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.D5.mapper.ManagerMapper">
+
+    <!-- 登录 -->
+    <select id="login" parameterType="String" resultType="com.D5.domain.User">
+        SELECT <include refid="user"></include>  from users where password=#{password} and mailName=#{mailName}
+    </select>
+
+    <!-- 添加新用户 -->
+    <insert id="addUser" parameterType="com.D5.domain.User">
+        INSERT users(password,roles_id,mailName) values(#{password},#{roles_id},#{mailName});
+    </insert>
+
+    <!-- 获取用户的信息 -->
+    <select id="selectUser"  resultType="com.D5.domain.User">
+        SELECT <include refid="user"></include> from users where mailName=#{mailName}
+    </select>
+
+    <!-- 更改用户的信息,修改个人信息,忘记密码和调整职位是差不多的sql操作 -->
+    <update id="change" parameterType="com.D5.domain.User">
+        UPDATE users
+        <set>
+            <if test="password!=null">password=#{password},</if>
+            <if test="roles_id!=null">roles_id=#{roles_id},</if>
+            <if test="mailName!=null">mailName=#{mailName}</if>
+        </set>
+        <where>
+            <if test="mailName!=null">mailName=#{mailName}</if>
+        </where>
+    </update>
+
+    <!-- 获取被调整用户的roles_id -->
+    <select id="selectRoles_id" resultType="String">
+        SELECT roles_id from users where mailName=#{mailName}  ;
+    </select>
+
+    <!--查找该用户所属的角色-->
+    <select id="selectRole" parameterType="int" resultType="com.D5.domain.Role">
+        SELECT <include refid="roles"></include>  from roles where roles_id=#{roles_id}
+    </select>
+    <!--用户表字段-->
+    <sql id="user">id,password,roles_id,mailName</sql>
+    <!--角色表字段-->
+    <sql id="roles">roles_id,place_name,menu_Id,remark</sql>
+</mapper>

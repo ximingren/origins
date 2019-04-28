@@ -1,0 +1,16 @@
+.lgn-save>label {
+     float: left;
+     margin-top: 5px;
+}
+#remember-chb {
+	float: right;
+	margin-left: 3px;
+}
+.app-cam p {
+	margin: 2.1em 0;
+}
+@media (max-width:768px) {
+	#logout {
+		display: block !important;
+	}
+}

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+    <mapper  namespace="com.D5.mapper.OriginMapper">
+    <!-- 获取当天最新数据，按水池分组 -->
+    <select id="selectData" resultType="com.D5.domain.Data" parameterType="com.D5.domain.Page">
+        SELECT <include refid="data"></include> from  water_quality  where receive_time>(select timestamp(date(sysdate()))) GROUP BY node_num  limit ${offset},${pageSize} ;
+    </select>
+    <!-- 获取水池的数量 -->
+    <select id="selectDataCount" resultType="int">
+       SELECT count(DISTINCT node_num) from water_quality
+    </select>
+    <!-- 获取全部数据 -->
+    <select id="selectAllData" resultType="com.D5.domain.Data" >
+      SELECT <include refid="Data"></include> from  water_quality
+    </select>
+    <!-- 获取被调整用户的roles_id -->
+    <select id="selectRoles_id"  resultType="String" >
+        SELECT roles_id from users where mailName=#{mailName}  ;
+    </select>
+    <!-- 登录 -->
+    <select id="login"  parameterType="com.D5.domain.User"  resultType="com.D5.domain.User">
+        SELECT <include refid="list"></include>  from users,roles where password=#{password} and users.roles_id=roles.id  and mailName=#{mailName}
+    </select>
+    <!-- 添加新用户 -->
+    <insert id="addUser"  parameterType="com.D5.domain.User">
+    INSERT users(password,roles_id,mailName) values(#{password},#{roles_id},#{mailName});
+    </insert>
+    <!-- 获取用户的信息 -->
+    <select id="selectUser" parameterType="com.D5.domain.User" resultType="com.D5.domain.User">
+        SELECT <include refid="list"></include> from users,roles where mailName=#{mailName} and users.roles_id=roles.id
+    </select>
+    <!-- 删除用户 -->
+    <delete id="deleteUser" parameterType="String">
+        DELETE FROM users where mailName=#{mailName};
+    </delete>
+    <!-- 更改用户的信息 -->
+    <update id="change" parameterType="com.D5.domain.User">
+        UPDATE  users
+        <set>
+            <if test=" password!=null">password=#{password},</if>
+        <if test="roles_id!=null"> roles_id=#{roles_id},</if>
+        <if test="mailName!=null">mailName=#{mailName}</if>
+        </set>
+      <where>
+          <if test="mailName!=null"> mailName=#{mailName}  </if>
+      </where>
+    </update>
+    <!-- 更改阈值 -->
+    <update id="setThreshold"  parameterType="com.D5.domain.Threshold">
+        UPDATE threshold  SET up_limit=#{uplimit},low_limit=#{lowlimit} WHERE name=#{name}
+    </update>
+    <!-- 更改阈值前要先删除旧阈值-->
+    <delete id="deleteThreshold">
+        DELETE FROM threshold;
+    </delete>
+    <!-- 获取阈值 -->
+    <select id="selectThreshold" resultType="com.D5.domain.Threshold">
+        SELECT name,up_limit as uplimit,low_limit as lowlimit,max_limit,min_limit from threshold
+    </select>
+    <!-- 获取最新一条数据 -->
+    <select id="selectOneData" resultType="com.D5.domain.Data">
+      SELECT id,node_num,package_num,pH,tem,DO,salt,COND,NH,DATE_FORMAT(MAX(receive_time),'%Y-%m-%d %k:%i:%S') as receive_time FROM water_quality
+      where  receive_time=(SELECT DATE_FORMAT(MAX(receive_time),'%Y-%m-%d %k:%i:%S')FROM water_quality);
+    </select>
+    <sql  id="list">users.id as id,place_name,password,users.roles_id as roles_id,mailName</sql>
+    <sql id="data" >id,node_num,package_num,pH,tem,DO,salt,COND,DATE_FORMAT(MAX(receive_time),'%Y-%m-%d %k:%i:%S') as receive_time,NH</sql>
+    <sql id="Data">id,node_num,package_num,pH,tem,DO,salt,COND,NH,DATE_FORMAT(receive_time,'%Y-%m-%d %k:%i:%S') as receive_time </sql>
+</mapper>

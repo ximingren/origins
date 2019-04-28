@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.D5.mapper.DataMapper">
+    <!--查找特定时间的数据-->
+    <select id="selectSpecityData" resultType="com.D5.domain.Data" parameterType="String">
+        SELECT
+        <include refid="common"></include>
+        <choose>
+            <when test="time=='Today'">
+                <include refid="Time"></include>
+                from water_quality where receive_time>(select timestamp(CURDATE()))
+            </when>
+            <when test="time=='Week'">
+                <include refid="Time"></include>
+                from water_quality where receive_time>(select DATE_SUB(CURDATE(), INTERVAL 1 WEEK))
+            </when>
+            <otherwise>
+                <include refid="Time"></include>
+                <![CDATA[
+                from water_quality where receive_time like '%' #{time} '%'
+               ]]>
+            </otherwise>
+        </choose>
+    </select>
+
+    <!-- 获取当天最新数据，按水池分组 -->
+    <select id="selectData" resultType="com.D5.domain.Data" parameterType="com.D5.domain.Page">
+        SELECT
+        <include refid="common"></include>
+        <include refid="maxTime"></include>
+        from water_quality where receive_time>(select timestamp(CURDATE()))
+        GROUP BY node_num limit ${offset},${pageSize}
+    </select>
+
+    <!-- 获取全部数据 -->
+    <select id="selectAllData" resultType="com.D5.domain.Data">
+        SELECT
+        <include refid="common"></include>
+        <include refid="Time"></include>from water_quality
+    </select>
+
+    <!-- 获取水池的数量 -->
+    <select id="selectDataCount" resultType="int">
+        SELECT count(DISTINCT node_num) from water_quality
+    </select>
+
+    <!-- 更改阈值 -->
+    <update id="setThreshold" parameterType="com.D5.domain.Threshold">
+        UPDATE threshold  SET up_limit=#{uplimit},low_limit=#{lowlimit} WHERE name=#{name}
+    </update>
+
+    <!-- 获取阈值 -->
+    <select id="selectThreshold" resultType="com.D5.domain.Threshold">
+        SELECT name,up_limit as uplimit,low_limit as lowlimit,max_limit,min_limit from threshold
+    </select>
+
+    <!-- 获取最新一条数据 -->
+    <select id="selectOneData" resultType="com.D5.domain.Data">
+        SELECT
+        <include refid="common"></include>
+        <include refid="Time"></include>
+        FROM water_quality
+    </select>
+    <!--相互对应着数据表中的字段-->
+    <sql id="common">id,node_num,package_num,pH,tem,DO,salt,COND,NH,</sql>
+    <!--获取最新数据所用-->
+    <sql id="maxTime">DATE_FORMAT(MAX(receive_time),'%Y-%m-%d %T') as receive_time</sql>
+    <!--获取数据所用-->
+    <sql id="Time">DATE_FORMAT(receive_time,'%Y-%m-%d %T') as receive_time </sql>
+</mapper>
